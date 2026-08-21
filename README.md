@@ -36,7 +36,7 @@ dort zeigt die App eine Fehlermeldung statt Wegedaten (siehe „Lokale Entwicklu
 „Betriebsarten" unten).
 
 Der ODAS-Proxy (`/odp-data`) ist dafür weiterhin keine Alternative: Er löst den Zielhost über den
-ODP-Host des betreibenden Portals auf, nicht über den in `apiurl` konfigurierten Host. Bei einem
+ODP-Host des betreibenden Portals auf, nicht über den in `apiurls.wanderwege` konfigurierten Host. Bei einem
 fremden Host wie `proxy.opendatagermany.io` scheitert jeder `/odp-data`-Aufruf mit HTTP 500. Diese
 App bietet deshalb weiterhin bewusst **kein** `proxyAktiv`-Feld an — sie nutzt den separaten
 `/dzt`-Relay.
@@ -84,11 +84,11 @@ und die verbleibenden Filter (Schwierigkeit, Länge, Rundweg).
 Die App lädt keine Datei, sondern fragt bei jeder Suche live die
 [DZT-Knowledge-Graph-API](https://changelog-dzt-kg.readme.io/) ab:
 
-1. **Suche** (`apiurl`, SPARQL-Endpunkt): Ein Geo-Umkreis-Query gegen die Trail-Domain-Specification
+1. **Suche** (`apiurls.wanderwege`, SPARQL-Endpunkt): Ein Geo-Umkreis-Query gegen die Trail-Domain-Specification
    (`https://semantify.it/ds/hSsrCTQowvYH`) liefert je Treffer Name, Länge, Schwierigkeit, Dauer,
    Rundweg-Kennzeichen, Art (`@type`) und einen Referenzpunkt (Startkoordinate) für die
    Kartenmarker – in einem Request statt einem Request je Treffer.
-2. **Detail** (abgeleitet von `apiurl`, `…/api/ts/v2/kg/things/{id}`): Beim Aufklappen eines Wegs
+2. **Detail** (abgeleitet von `apiurls.wanderwege`, `…/api/ts/v2/kg/things/{id}`): Beim Aufklappen eines Wegs
    wird der vollständige Datensatz nachgeladen (Beschreibung, Bilder, Streckengeometrie,
    Höhenmeter, Lizenz). Ergebnisse werden pro Sitzung gecacht.
 
@@ -185,7 +185,7 @@ Folgende Parameter werden bei der App-Instanzierung im ODAS konfiguriert:
 
 | Parameter | Beschreibung | Pflicht |
 | --- | --- | --- |
-| `apiurl` | SPARQL-Endpunkt des DZT Knowledge Graph. Der Abruf läuft über den ODAS-DZT-Relay, der REST-Detailpfad wird automatisch aus derselben Origin abgeleitet. | ja |
+| `apiurls` | URLs zu Datenressourcen. Eintrag `wanderwege`: SPARQL-Endpunkt des DZT Knowledge Graph. Der Abruf läuft über den ODAS-DZT-Relay, der REST-Detailpfad wird automatisch aus derselben Origin abgeleitet. | ja (Eintrag `wanderwege`) |
 | `urlDaten` | URL zur Zugriffsdokumentation des DZT Knowledge Graph | ja |
 | `ort` | Ortsname, um den die Wege dieser Instanz gesucht werden (Nominatim-Geokodierung) | ja |
 | `radiusKm` | Suchradius um den konfigurierten Ort (5/10/25/50/100 km) | ja |

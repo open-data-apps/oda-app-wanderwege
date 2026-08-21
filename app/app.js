@@ -893,7 +893,7 @@ async function loadTrailDetail(state, trail) {
 }
 
 async function fetchTrailDetail(id, configdata) {
-  const thingsPath = buildThingsPath(configdata.apiurl);
+  const thingsPath = buildThingsPath(getOdasApiUrl(configdata, "wanderwege"));
   if (!thingsPath) throw new Error("Der Detail-Endpunkt konnte nicht aus der Instanzkonfiguration abgeleitet werden.");
   const lastSlash = id.lastIndexOf("/");
   const ns = id.slice(0, lastSlash + 1);
@@ -1079,7 +1079,7 @@ function detailHtml(state, trail, detail) {
       <div class="ww-detail-section">
         <h3 class="ww-detail-section-title">Daten &amp; Lizenz</h3>
         <div class="ww-detail-info">
-          ${detail.licenseUrl ? `<div><a href="${escapeAttr(detail.licenseUrl)}" target="_blank" rel="noopener" class="ww-link">Lizenzbedingungen</a></div>` : ""}
+          ${detail.licenseUrl ? `<div><a href="${escapeAttr(safeHttpUrl(detail.licenseUrl))}" target="_blank" rel="noopener" class="ww-link">Lizenzbedingungen</a></div>` : ""}
           ${detail.authorName ? `<div><span class="ww-info-label">Quelle</span> <span class="ww-info-value">${escapeHtml(detail.authorName)}</span></div>` : ""}
         </div>
       </div>
@@ -1295,7 +1295,7 @@ function renderSchale4Blocks(state) {
 // ---------------------------------------------------------------------------
 
 function missingSourceReason(configdata) {
-  const apiurl = String(configdata.apiurl || "").trim();
+  const apiurl = getOdasApiUrl(configdata, "wanderwege");
   const ort = String(configdata.ort || "").trim();
   const isPlaceholder = (v) => /^\{\{.*\}\}$/.test(v) || /^<.*>$/.test(v);
   if (!apiurl || isPlaceholder(apiurl)) return "Es ist keine Datenquelle konfiguriert.";
@@ -1356,8 +1356,19 @@ function dztApiPath(apiurl) {
   }
 }
 
+/**
+ * Löst eine benannte Datenressource aus configdata.apiurls auf.
+ * Neue apiurls-Form (typ: "array"); das frühere skalare apiurl wird nicht mehr gelesen.
+ * @returns {string} getrimmte URL, oder "" für den Zustand "keine Quelle konfiguriert"
+ */
+function getOdasApiUrl(configdata, name) {
+  const liste = Array.isArray(configdata && configdata.apiurls) ? configdata.apiurls : [];
+  const treffer = liste.find((eintrag) => eintrag && eintrag.name === name);
+  return String((treffer && treffer.url) || "").trim();
+}
+
 async function fetchSparql(query, configdata, signal) {
-  const base = dztApiPath(configdata.apiurl);
+  const base = dztApiPath(getOdasApiUrl(configdata, "wanderwege"));
   if (!base) throw new Error("Der SPARQL-Endpunkt konnte nicht aus der Instanzkonfiguration abgeleitet werden.");
   const path = `${base}?${new URLSearchParams({ query }).toString()}`;
   return fetchKgJson(path, { accept: "application/sparql-results+json" }, signal);

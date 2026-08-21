@@ -3,7 +3,7 @@
   "app-entwickler-name": "ondics-gmbh",
   "name-in-url": "wanderwege",
   "name": "Wanderwege",
-  "version": "1.3.0",
+  "version": "1.5.0",
   "odas-app-icon": "assets/odas-app-icon.svg",
   "app-icon": "assets/odas-app-icon.svg",
   "kurzbeschreibung": "Zeigt Wander- und Radwege im konfigurierten Umkreis eines festen Orts – mit Karte, Streckenverlauf, Höhenprofil und ODTA-konformem JSON-LD-Export.",
@@ -253,17 +253,24 @@
       },
       "erforderlich": "ja"
     },
-    "apiurl": {
-      "label": "SPARQL-Endpunkt",
+    "apiurls": {
+      "label": "URLs zu Datenressourcen",
       "category": "datenherkunft",
-      "hilfe": "SPARQL-Endpunkt des DZT Knowledge Graph. Der Abruf läuft über den DZT-Relay des Open Data App Store (…/dzt), der den API-Key serverseitig ergänzt; die REST-Detailabfrage wird automatisch aus derselben Origin abgeleitet (…/api/ts/v2/kg/things).",
-      "default": "https://proxy.opendatagermany.io/api/ts/v1/kg/sparql",
-      "beispiel": "https://proxy.opendatagermany.io/api/ts/v1/kg/sparql",
+      "hilfe": "Direkter Download-, Datei- oder API-Endpunkt der tatsächlich verwendeten Datenquelle(n). Mehrere Einträge möglich.",
+      "typ": "array",
       "format": {
         "typ": "url",
-        "laenge": 255
+        "laenge": 500
       },
-      "erforderlich": "ja"
+      "urls": [
+        {
+          "name": "wanderwege",
+          "label": "SPARQL-Endpunkt",
+          "default": "https://proxy.opendatagermany.io/api/ts/v1/kg/sparql",
+          "beispiel": "https://proxy.opendatagermany.io/api/ts/v1/kg/sparql",
+          "erforderlich": "ja"
+        }
+      ]
     },
     "ort": {
       "label": "Ort",

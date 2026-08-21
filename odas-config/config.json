@@ -43,7 +43,13 @@
   ],
   "fusszeile": "© 2026 | Daten: DZT Knowledge Graph | App-Entwickler: Ondics GmbH | ODAS: Ondics GmbH",
   "urlDaten": "https://changelog-dzt-kg.readme.io/docs/how-to-access-the-data",
-  "apiurl": "https://proxy.opendatagermany.io/api/ts/v1/kg/sparql",
+  "apiurls": [
+    {
+      "name": "wanderwege",
+      "label": "SPARQL-Endpunkt",
+      "url": "https://proxy.opendatagermany.io/api/ts/v1/kg/sparql"
+    }
+  ],
   "ort": "Böblingen",
   "radiusKm": "25",
   "kategorie": "Fußwanderweg",

@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.5.0 - 2026-08-21
+- **FIX:** `href`-Interpolation der Lizenz-URL im Detail-Panel (`detail.licenseUrl`) explizit an `safeHttpUrl(...)` gebunden, damit die Absicherung am Sink sichtbar ist (der Wert war bereits bei der Erzeugung sanitisiert, der Linter verlangt aber eine Bindung direkt am `href`).
+- **FIX:** App im Vendor-Manifest (`tools/odas-vendor-check/manifest.json`) nachgetragen — fehlte komplett, wodurch jeder referenzierte Host als nicht erlaubt galt. `nominatim.openstreetmap.org`/`tile.openstreetmap.org` (echte Browser-Fetches) unter `drittanbieter` ergänzt; `proxy.opendatagermany.io` (serverseitiger DZT-Relay) sowie die RDF/SPARQL-Namespace-Konstanten `schema.org`, `odta.io`, `vocab.sti2.at`, `semantify.it`, `www.ontotext.com` (kein Datenabruf) unter `host-ausnahmen` begründet.
+
+## 1.4.0 - 2026-08-21
+- **CHG:** Skalares `apiurl` durch das Array-Feld `apiurls` ersetzt (`typ: "array"`, Eintrag `wanderwege`). Neuer Standard portfolioweit; `apiurl` entfällt. `app.js` liest die Datenquelle jetzt über `getOdasApiUrl(configdata, "wanderwege")`.
+
 ## 1.3.0 - 2026-08-20
 - Markdown-Metadaten: Paketbeschreibungen auf echtes Markdown umgestellt, exakte Identität Top-Level/Instanz hergestellt, lokale HTML-Fixture semantisch gespiegelt.
 
