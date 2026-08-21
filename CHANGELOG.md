@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.3.0 - 2026-08-20
+- Markdown-Metadaten: Paketbeschreibungen auf echtes Markdown umgestellt, exakte Identität Top-Level/Instanz hergestellt, lokale HTML-Fixture semantisch gespiegelt.
+
 ## 1.2.0 - 2026-08-20
 - BREAKING: `apiKey` entfernt aus `instanz-config` — die App verwaltet keinen eigenen DZT-API-Key
   mehr. Alle Abrufe laufen über den neuen ODAS-DZT-Relay (`<app-url>/dzt?path=…`), der Host,
