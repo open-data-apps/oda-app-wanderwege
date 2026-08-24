@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.6.0 - 2026-08-22
+- **CHG:** `version` in `app-package.json` zu `app-version` umbenannt.
+- **ENH:** Top-Level-Feld `app-package-version` ergänzt (Wert `"2"`: mehrere benannte API-URLs über `instanz-config.apiurls`).
+
 ## 1.5.0 - 2026-08-21
 - **FIX:** `href`-Interpolation der Lizenz-URL im Detail-Panel (`detail.licenseUrl`) explizit an `safeHttpUrl(...)` gebunden, damit die Absicherung am Sink sichtbar ist (der Wert war bereits bei der Erzeugung sanitisiert, der Linter verlangt aber eine Bindung direkt am `href`).
 - **FIX:** App im Vendor-Manifest (`tools/odas-vendor-check/manifest.json`) nachgetragen — fehlte komplett, wodurch jeder referenzierte Host als nicht erlaubt galt. `nominatim.openstreetmap.org`/`tile.openstreetmap.org` (echte Browser-Fetches) unter `drittanbieter` ergänzt; `proxy.opendatagermany.io` (serverseitiger DZT-Relay) sowie die RDF/SPARQL-Namespace-Konstanten `schema.org`, `odta.io`, `vocab.sti2.at`, `semantify.it`, `www.ontotext.com` (kein Datenabruf) unter `host-ausnahmen` begründet.
