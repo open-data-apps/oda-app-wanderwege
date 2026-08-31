@@ -1319,7 +1319,7 @@ function showStatus(state, message, kind) {
     el.innerHTML = "";
     return;
   }
-  const cls = { loading: "ww-status-loading", error: "alert alert-danger", info: "ww-status-info" }[kind] || "ww-status-info";
+  const cls = { loading: "ww-status-loading", error: "alert alert-danger", info: "alert alert-info" }[kind] || "alert alert-info";
   const spinner = kind === "loading" ? `<div class="spinner-border spinner-border-sm text-primary" role="status"><span class="visually-hidden">Wird geladen …</span></div>` : "";
   el.innerHTML = `<div class="${cls}" role="status">${spinner}<span>${escapeHtml(message)}</span></div>`;
 }
