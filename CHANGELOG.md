@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.7.1 - 2026-09-07
+- **FIX:** Frictionless-Härtung: `daten.beispiel` dokumentiert DZT-Relay-Pflicht und 3B-Ausnahme (Basis-Endpunkt ohne Query nicht validierbar — Code-Beleg: `dztApiPath` verwirft Query-Anteile, `fetchSparql` baut die Query zur Laufzeit). Schema vollständig, keine Key-Funde im App-Code.
+
 ## 1.7.0 - 2026-08-25
 - **FIX:** Tote Anbieter-Shortcodes in Kontakt/Impressum ersetzt (`{{odp.anbieter.url-extern}}` → `{{odp.anbieter.url}}`, `tel:{{odp.anbieter.telcode}}` → `tel:{{odp.anbieter.tel}}`).
 

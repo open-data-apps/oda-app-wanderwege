@@ -3,7 +3,7 @@
   "app-entwickler-name": "ondics-gmbh",
   "name-in-url": "wanderwege",
   "name": "Wanderwege",
-  "app-version": "1.7.0",
+  "app-version": "1.7.1",
   "app-package-version": "2",
   "odas-app-icon": "assets/odas-app-icon.svg",
   "app-icon": "assets/odas-app-icon.svg",
@@ -69,7 +69,7 @@
   "daten": {
     "beschreibung": "ODTA-konforme Wander- und Radwege (odta:Trail) aus dem DZT Knowledge Graph. Suche per SPARQL-Geo-Umkreisabfrage, Detaildaten per REST-Einzelabruf (GET /v2/kg/things/{id}).",
     "schema": "assets/schema.json",
-    "beispiel": "SPARQL-Ergebnis im Format application/sparql-results+json mit den Variablen id, name, length, diffName, duration, circ, type, startLat, startLon je Treffer.",
+    "beispiel": "SPARQL-Ergebnis im Format application/sparql-results+json mit den Variablen id, name, length, diffName, duration, circ, type, startLat, startLon je Treffer. Abruf ausschließlich über den DZT-Relay des Stores (API-Key serverseitig); der Basis-Endpunkt ist ohne Query nicht validierbar (3B-Ausnahme, siehe Pilot-REPORT).",
     "beispiel-url": "https://proxy.opendatagermany.io/api/ts/v1/kg/sparql"
   },
   "branding-css": "",
