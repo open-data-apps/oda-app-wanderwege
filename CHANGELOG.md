@@ -1,6 +1,7 @@
 # Changelog
 
 ## 1.7.1 - 2026-09-07
+- **FIX:** Variante-A-Verdrahtung (F-92): Typprüfung (sparql) der DZT-Quelle vor dem ersten Fetch (Relay-Sonderfall: geprüft wird die konfigurierte URL); fehlende Datenquelle über `renderOdasFehler`, "kein Ort" bleibt Info-Zustand (1.7.1 -> 1.7.2).
 - **FIX:** Frictionless-Härtung: `daten.beispiel` dokumentiert DZT-Relay-Pflicht und 3B-Ausnahme (Basis-Endpunkt ohne Query nicht validierbar — Code-Beleg: `dztApiPath` verwirft Query-Anteile, `fetchSparql` baut die Query zur Laufzeit). Schema vollständig, keine Key-Funde im App-Code.
 
 ## 1.7.0 - 2026-08-25

@@ -298,8 +298,35 @@ function renderErklaerText(state) {
 async function initSearchFromConfig(state) {
   const missing = missingSourceReason(state.config);
   if (missing) {
-    showStatus(state, missing, "info");
+    // F-92: fehlende Datenquelle ueber renderOdasFehler; "kein Ort" bleibt der
+    // schlanke Info-Zustand (Fachkonfiguration, kein Quelldefekt).
+    if (/Datenquelle/.test(missing)) {
+      renderOdasFehler(state.root, new Error(missing), {
+        url: getOdasApiUrl(state.config, "wanderwege"),
+        label: "DZT-Wissensdatenbank (SPARQL)",
+        typLabel: "Wissensdatenbank (SPARQL)",
+        erwarteterTyp: "sparql",
+      });
+    } else {
+      showStatus(state, missing, "info");
+    }
     state.searchCompleted = true; // ohne Config-Aenderung gibt es nichts zu wiederholen
+    return;
+  }
+  // Variante A (F-92): Typprüfung vor dem ersten Fetch. Sonderfall DZT-Relay:
+  // geprueft wird die konfigurierte SPARQL-URL, nicht der Relay-Pfad.
+  const wwTypWarn = validateUrlTypErwartung(
+    getOdasApiUrl(state.config, "wanderwege"),
+    "sparql",
+  );
+  if (wwTypWarn) {
+    renderOdasFehler(state.root, new Error(wwTypWarn), {
+      url: getOdasApiUrl(state.config, "wanderwege"),
+      label: "DZT-Wissensdatenbank (SPARQL)",
+      typLabel: "Wissensdatenbank (SPARQL)",
+      erwarteterTyp: "sparql",
+    });
+    state.searchCompleted = true;
     return;
   }
 
