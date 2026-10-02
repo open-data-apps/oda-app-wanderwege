@@ -3,7 +3,7 @@
   "app-entwickler-name": "ondics-gmbh",
   "name-in-url": "wanderwege",
   "name": "Wanderwege",
-  "app-version": "1.7.2",
+  "app-version": "1.7.3",
   "app-package-version": "2",
   "odas-app-icon": "assets/odas-app-icon.svg",
   "app-icon": "assets/odas-app-icon.svg",
@@ -74,6 +74,7 @@
   },
   "branding-css": "",
   "api-version": "1",
+  "odas-services": ["tourismus-odg"],
   "instanz-config": {
     "seitentitel": {
       "label": "Seitentitel",

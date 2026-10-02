@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.7.3 - 2026-10-02
+- ENH: Verwendete ODAS-Dienste in `odas-services` deklariert.
+
 ## 1.7.2 - 2026-09-08
 - **FIX:** Variante-A-Verdrahtung (F-92): Typprüfung (sparql) der DZT-Quelle vor dem ersten Fetch (Relay-Sonderfall: geprüft wird die konfigurierte URL); fehlende Datenquelle über `renderOdasFehler`, "kein Ort" bleibt Info-Zustand (1.7.1 -> 1.7.2).
 
