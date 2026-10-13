@@ -302,9 +302,6 @@ function renderErklaerText(state) {
 // Suche: konfigurierter Ort/Umkreis/Kategorie -> Geocoding -> SPARQL
 // ---------------------------------------------------------------------------
 
-// Loest beim Erstaufruf einer Instanz automatisch den konfigurierten
-// Ausschnitt auf und laedt ihn. Liefert kein UI-Suchfeld mehr — Ort, Umkreis
-// und Kategorie sind Redaktionssache (instanz-config), nicht Nutzer:innensache.
 function showWwConfigurationError(state, message) {
   // F-125: Der Fehler gehört zum erhaltenen Zustand, nicht nur zum ersetzten DOM.
   state.configurationError = message;
@@ -316,6 +313,9 @@ function showWwConfigurationError(state, message) {
   });
 }
 
+// Loest beim Erstaufruf einer Instanz automatisch den konfigurierten
+// Ausschnitt auf und laedt ihn. Liefert kein UI-Suchfeld mehr — Ort, Umkreis
+// und Kategorie sind Redaktionssache (instanz-config), nicht Nutzer:innensache.
 async function initSearchFromConfig(state) {
   state.configurationError = null;
   const missing = missingSourceReason(state.config);

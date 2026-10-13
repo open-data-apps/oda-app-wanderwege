@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.7.6 - 2026-10-13
+- DOC: Kommentar zur automatischen Erstsuche steht wieder über initSearchFromConfig.
+
 ## 1.7.5 - 2026-10-08
 - FIX: F-112: Unbekannte Antwortstrukturen als Formatfehler statt als leere Daten anzeigen; bekannte leere Listen bleiben gültig.
 - FIX: F-124: Fehlende/leere/ungültige Detailkennzahlen bleiben unbekannt und werden nicht als 0 exportiert. Explizite numerische 0 bleibt erhalten.
