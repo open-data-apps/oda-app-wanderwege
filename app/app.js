@@ -169,9 +169,18 @@ function app(configdata = {}, enclosingHtmlDivElement) {
     // Suche bereits abgeschlossen war.
     cached.disposed = false;
     cached.root = enclosingHtmlDivElement;
+    // F-125: Nach einer tatsächlichen Konfigurationskorrektur erneut prüfen.
+    if (cached.configurationError && JSON.stringify(cached.config) !== JSON.stringify(configdata)) {
+      cached.configurationError = null;
+      cached.searchCompleted = false;
+    }
     cached.config = configdata;
     mountShell(cached);
 
+    if (cached.configurationError) {
+      showWwConfigurationError(cached, cached.configurationError);
+      return;
+    }
     if (cached.searchCompleted) {
       if (cached.statusMessage) showStatus(cached, cached.statusMessage.text, cached.statusMessage.kind);
       applyFilters(cached); // rendert KPIs/Liste/Karte aus dem Cache
@@ -210,6 +219,7 @@ function app(configdata = {}, enclosingHtmlDivElement) {
     searchAbortController: null,
     hitLimit: false,
     statusMessage: null,
+    configurationError: null,
     searchCompleted: false,
   };
   wwInstances.set(enclosingHtmlDivElement, state);
@@ -295,18 +305,25 @@ function renderErklaerText(state) {
 // Loest beim Erstaufruf einer Instanz automatisch den konfigurierten
 // Ausschnitt auf und laedt ihn. Liefert kein UI-Suchfeld mehr — Ort, Umkreis
 // und Kategorie sind Redaktionssache (instanz-config), nicht Nutzer:innensache.
+function showWwConfigurationError(state, message) {
+  // F-125: Der Fehler gehört zum erhaltenen Zustand, nicht nur zum ersetzten DOM.
+  state.configurationError = message;
+  renderOdasFehler(state.root, new Error(message), {
+    url: getOdasApiUrl(state.config, "wanderwege"),
+    label: "DZT-Wissensdatenbank (SPARQL)",
+    typLabel: "Wissensdatenbank (SPARQL)",
+    erwarteterTyp: "sparql",
+  });
+}
+
 async function initSearchFromConfig(state) {
+  state.configurationError = null;
   const missing = missingSourceReason(state.config);
   if (missing) {
     // F-92: fehlende Datenquelle ueber renderOdasFehler; "kein Ort" bleibt der
     // schlanke Info-Zustand (Fachkonfiguration, kein Quelldefekt).
     if (/Datenquelle/.test(missing)) {
-      renderOdasFehler(state.root, new Error(missing), {
-        url: getOdasApiUrl(state.config, "wanderwege"),
-        label: "DZT-Wissensdatenbank (SPARQL)",
-        typLabel: "Wissensdatenbank (SPARQL)",
-        erwarteterTyp: "sparql",
-      });
+      showWwConfigurationError(state, missing);
     } else {
       showStatus(state, missing, "info");
     }
@@ -320,12 +337,7 @@ async function initSearchFromConfig(state) {
     "sparql",
   );
   if (wwTypWarn) {
-    renderOdasFehler(state.root, new Error(wwTypWarn), {
-      url: getOdasApiUrl(state.config, "wanderwege"),
-      label: "DZT-Wissensdatenbank (SPARQL)",
-      typLabel: "Wissensdatenbank (SPARQL)",
-      erwarteterTyp: "sparql",
-    });
+    showWwConfigurationError(state, wwTypWarn);
     state.searchCompleted = true;
     return;
   }
@@ -946,6 +958,12 @@ function buildThingsPath(sparqlUrl) {
 }
 
 function parseTrailDetail(obj) {
+  // F-124: Fehlende/leere Literale sind unbekannt, eine echte 0 bleibt gültig.
+  const numericLiteral = (value) => {
+    if (value == null || String(value).trim() === "") return null;
+    const number = Number(value);
+    return Number.isFinite(number) ? number : null;
+  };
   const description = jsonLdText(obj[P.description]);
   const images = (Array.isArray(obj[P.image]) ? obj[P.image] : obj[P.image] ? [obj[P.image]] : [])
     .map((img) => ({
@@ -954,9 +972,9 @@ function parseTrailDetail(obj) {
     }))
     .filter((img) => img.url);
 
-  const lengthM = literalValue(getPath(obj, [P.length, P.value]));
-  const uphillM = literalValue(getPath(obj, [P.uphillElevation, P.value]));
-  const downhillM = literalValue(getPath(obj, [P.downhillElevation, P.value]));
+  const lengthM = numericLiteral(literalValue(getPath(obj, [P.length, P.value])));
+  const uphillM = numericLiteral(literalValue(getPath(obj, [P.uphillElevation, P.value])));
+  const downhillM = numericLiteral(literalValue(getPath(obj, [P.downhillElevation, P.value])));
   const durationIso = literalValue(getPath(obj, [P.estimatedDuration, P.name])) || jsonLdText(getPath(obj, [P.estimatedDuration, P.name]));
   const circularRaw = literalValue(obj[P.circularTrail]);
 
@@ -975,9 +993,9 @@ function parseTrailDetail(obj) {
   return {
     description,
     images,
-    lengthKm: Number.isFinite(Number(lengthM)) ? Number(lengthM) / 1000 : null,
-    uphillM: Number.isFinite(Number(uphillM)) ? Number(uphillM) : null,
-    downhillM: Number.isFinite(Number(downhillM)) ? Number(downhillM) : null,
+    lengthKm: lengthM != null ? lengthM / 1000 : null,
+    uphillM,
+    downhillM,
     durationText: formatIsoDuration(durationIso),
     circular: circularRaw === "true" || circularRaw === true,
     difficulty,
@@ -1398,7 +1416,12 @@ async function fetchSparql(query, configdata, signal) {
   const base = dztApiPath(getOdasApiUrl(configdata, "wanderwege"));
   if (!base) throw new Error("Der SPARQL-Endpunkt konnte nicht aus der Instanzkonfiguration abgeleitet werden.");
   const path = `${base}?${new URLSearchParams({ query }).toString()}`;
-  return fetchKgJson(path, { accept: "application/sparql-results+json" }, signal);
+  const json = await fetchKgJson(path, { accept: "application/sparql-results+json" }, signal);
+  // F-112: Nur eine echte Bindings-Liste (auch []) ist eine gültige SPARQL-Antwort.
+  if (!json || !json.results || !Array.isArray(json.results.bindings)) {
+    throw new Error("Unbekanntes Antwortformat: SPARQL-Bindings erwartet.");
+  }
+  return json;
 }
 
 async function fetchKgJson(path, extraHeaders = {}, signal) {

@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.7.5 - 2026-10-08
+- FIX: F-112: Unbekannte Antwortstrukturen als Formatfehler statt als leere Daten anzeigen; bekannte leere Listen bleiben gültig.
+- FIX: F-124: Fehlende/leere/ungültige Detailkennzahlen bleiben unbekannt und werden nicht als 0 exportiert. Explizite numerische 0 bleibt erhalten.
+
+## 1.7.4 - 2026-10-08
+- FIX: F-125: Fehlende/falsch konfigurierte Quelle bleibt auch nach Kontakt/Startseite als Konfigurationsfehler sichtbar. Eine korrigierte Konfiguration wird erneut geprüft.
+
 ## 1.7.3 - 2026-10-02
 - ENH: Verwendete ODAS-Dienste in `odas-services` deklariert.
 
