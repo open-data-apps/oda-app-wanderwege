@@ -87,7 +87,10 @@ Die App lädt keine Datei, sondern fragt bei jeder Suche live die
 1. **Suche** (`apiurls.wanderwege`, SPARQL-Endpunkt): Ein Geo-Umkreis-Query gegen die Trail-Domain-Specification
    (`https://semantify.it/ds/hSsrCTQowvYH`) liefert je Treffer Name, Länge, Schwierigkeit, Dauer,
    Rundweg-Kennzeichen, Art (`@type`) und einen Referenzpunkt (Startkoordinate) für die
-   Kartenmarker – in einem Request statt einem Request je Treffer.
+   Kartenmarker – in einem Request statt einem Request je Treffer. Die Abfrage ist nach Entfernung
+   des Startpunkts sortiert und auf 1000 Zeilen begrenzt: geladen werden die nächstgelegenen unter
+   den Treffern, die die DZT-Umkreissuche liefert (Wege ohne Startpunkt zuletzt); diese Treffer
+   können zwischen Abrufen wechseln.
 2. **Detail** (abgeleitet von `apiurls.wanderwege`, `…/api/ts/v2/kg/things/{id}`): Beim Aufklappen eines Wegs
    wird der vollständige Datensatz nachgeladen (Beschreibung, Bilder, Streckengeometrie,
    Höhenmeter, Lizenz). Ergebnisse werden pro Sitzung gecacht.

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.8 - 2026-10-14
+- FEAT: Die DZT-Abfrage sortiert nach Entfernung des Startpunkts (Wege ohne Startpunkt am Ende); bei erreichter Zeilengrenze (`LIMIT 1000`) werden die nächstgelegenen statt einer zufälligen Auswahl geladen (gemessen: Freiburg 25 km – Startpunkte jetzt innerhalb von 22 km statt bis 121 km, Median 15 statt 21 km). Grenze und Paging unverändert, die Antwortzeit steigt auf rund 1,5–4 s.
+- FIX: Hinweis bei erreichter Grenze, Methodik und README benennen, dass die DZT-Umkreissuche zwischen Abrufen wechselnde Treffer liefern kann.
+- TEST: Neuer Strukturtest `tests/sparql-query.test.cjs`.
+
 ## 1.7.7 - 2026-10-13
 - FIX: Standard-Fehleranzeige gibt präzisere Tipps: ein „Failed to fetch“ ohne Proxy-Kontext erhält einen Netzwerk-Hinweis statt `proxyAktiv`; der 404-Hinweis gilt nur noch für echte HTTP-404-Antworten und nennt den lokal fehlenden Proxy/Relay statt pauschal „Datensatz auf dem Portal nicht gefunden“.
 

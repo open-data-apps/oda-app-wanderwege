@@ -452,9 +452,14 @@ function buildTrailSearchSparql(lat, lon, radiusKm) {
     },
   });
   const geoShapeLiteral = JSON.stringify(geoShapeJson);
+  // 1.7.8: Nächstgelegene Startpunkte zuerst (Abstandsquadrat mit Breitenkorrektur), Wege ohne
+  // Startpunkt ans Ende. Die DZT-Umkreissuche liefert wechselnde Kandidatenmengen;
+  // „nächstgelegen“ gilt daher für die jeweils gelieferten Treffer.
+  const breitenFaktor = (Math.cos((latNum * Math.PI) / 180) ** 2).toFixed(4);
 
   return `PREFIX inst: <http://www.ontotext.com/connectors/elasticsearch/instance#>
 PREFIX con: <http://www.ontotext.com/connectors/elasticsearch#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 PREFIX schema: <https://schema.org/>
 PREFIX odta: <https://odta.io/voc/>
 PREFIX ds: <https://vocab.sti2.at/ds/>
@@ -478,6 +483,7 @@ SELECT ?id ?name ?length ?diffName ?duration ?circ ?type ?startLat ?startLon WHE
     ?startGeo schema:latitude ?startLat ; schema:longitude ?startLon .
   }
 }
+ORDER BY DESC(BOUND(?startLat)) ASC((xsd:double(?startLat) - ${latNum}) * (xsd:double(?startLat) - ${latNum}) + (xsd:double(?startLon) - ${lonNum}) * (xsd:double(?startLon) - ${lonNum}) * ${breitenFaktor})
 LIMIT 1000`;
 }
 
@@ -723,7 +729,7 @@ function renderList(state) {
   }
 
   const limitNotice = state.hitLimit
-    ? `<div class="alert alert-warning ww-limit-notice" role="alert">Sehr viele Treffer im gewählten Umkreis – die Liste ist möglicherweise unvollständig. Kleineren Umkreis wählen.</div>`
+    ? `<div class="alert alert-warning ww-limit-notice" role="alert">Sehr viele Treffer im gewählten Umkreis – die Liste ist möglicherweise unvollständig. Geladen werden die nächstgelegenen unter den Treffern, die die DZT-Umkreissuche liefert (nach Startpunkt sortiert); diese Treffer können zwischen Abrufen wechseln. Kleineren Umkreis wählen.</div>`
     : "";
 
   list.innerHTML =
