@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.7.9 - 2026-10-14
+- FIX: Die Wegsuche fasst je Weg eine Ergebniszeile zusammen (`GROUP BY ?id` mit `SAMPLE`/`GROUP_CONCAT`), sodass `LIMIT` Wege statt Zeilen zählt und kein Weg mehr mit abgeschnittenen Angaben (Namen, Typen) am Listenende steht. Bisher ergaben 1000 Zeilen nur rund 90–180 Wege aller Kategorien.
+- FIX: Die konfigurierte Kategorie (Radweg/Fußwanderweg/Sonstige) filtert bereits die SPARQL-Abfrage, mit derselben Rangfolge wie die bisherige Zuordnung im Browser (Rad > Wandern > Sonstige); andere Kategorien verbrauchen keine Plätze der Grenze mehr.
+- CHANGE: Grenze jetzt 500 Wege der eingestellten Kategorie (`LIMIT 500`, Hinweis ab 500 geladenen Wegen statt ab 950 Zeilen). 500 deckt einen 25-km-Umkreis in den Messungen vollständig ab, hält die Karte (Marker ohne Clustering) übersichtlich und die Antwortzeit unter etwa 6,5 s (gemessen 2026-10-14, Böblingen 25 km sowie Freiburg 25/50/100 km: 0,9–6,2 s).
+- FIX: Entfernungssortierung per `ORDER BY ASC(COALESCE(<Abstand>, 1e9))`: Wege ohne oder mit nicht numerischem Startpunkt landen am Ende.
+- PERF: Umkreissuche als Unterabfrage vor der Prüfung der Trail-Spezifikation (Muster `oda-sehenswuerdigkeiten`).
+- DOCS: Hinweis bei erreichter Grenze, Beschreibung und README nennen die 500-Wege-Grenze und den Kategorie-Filter in der Abfrage.
+- TEST: `tests/sparql-query.test.cjs` prüft Aggregation, Kategorie-Filter, Einlesen der aggregierten Zeilen und die Grenzmeldung gegen die ausgelieferte `app/app.js`.
+
 ## 1.7.8 - 2026-10-14
 - FEAT: Die DZT-Abfrage sortiert nach Entfernung des Startpunkts (Wege ohne Startpunkt am Ende); bei erreichter Zeilengrenze (`LIMIT 1000`) werden die nächstgelegenen statt einer zufälligen Auswahl geladen (gemessen: Freiburg 25 km – Startpunkte jetzt innerhalb von 22 km statt bis 121 km, Median 15 statt 21 km). Grenze und Paging unverändert; die Antwortzeit steigt auf etwa das 1,5- bis 4-Fache (gemessen bis 4,4 s bei 50 km und 5,1 s bei 100 km).
 - FIX: Hinweis bei erreichter Grenze, Methodik und README benennen, dass die DZT-Umkreissuche zwischen Abrufen wechselnde Treffer liefern kann.

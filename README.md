@@ -87,10 +87,11 @@ Die App lädt keine Datei, sondern fragt bei jeder Suche live die
 1. **Suche** (`apiurls.wanderwege`, SPARQL-Endpunkt): Ein Geo-Umkreis-Query gegen die Trail-Domain-Specification
    (`https://semantify.it/ds/hSsrCTQowvYH`) liefert je Treffer Name, Länge, Schwierigkeit, Dauer,
    Rundweg-Kennzeichen, Art (`@type`) und einen Referenzpunkt (Startkoordinate) für die
-   Kartenmarker – in einem Request statt einem Request je Treffer. Die Abfrage ist nach Entfernung
-   des Startpunkts sortiert und auf 1000 Zeilen begrenzt: geladen werden die nächstgelegenen unter
-   den Treffern, die die DZT-Umkreissuche liefert (Wege ohne Startpunkt zuletzt); diese Treffer
-   können zwischen Abrufen wechseln.
+   Kartenmarker – in einem Request statt einem Request je Treffer. Die Abfrage fasst je Weg eine
+   Zeile zusammen (`GROUP BY`), filtert bereits auf die konfigurierte Kategorie, ist nach Entfernung
+   des Startpunkts sortiert und auf 500 Wege begrenzt (`LIMIT 500`): geladen werden die
+   nächstgelegenen unter den Treffern, die die DZT-Umkreissuche liefert (Wege ohne oder mit nicht
+   numerischem Startpunkt zuletzt); diese Treffer können zwischen Abrufen wechseln.
 2. **Detail** (abgeleitet von `apiurls.wanderwege`, `…/api/ts/v2/kg/things/{id}`): Beim Aufklappen eines Wegs
    wird der vollständige Datensatz nachgeladen (Beschreibung, Bilder, Streckengeometrie,
    Höhenmeter, Lizenz). Ergebnisse werden pro Sitzung gecacht.
@@ -169,7 +170,8 @@ node --test tests/
 ```
 
 Die Offline-Tests laden die ausgelieferte `app/app.js` und prüfen den Aufbau der DZT-Abfrage
-(Sortierung nach Entfernung, `LIMIT 1000`) und den Hinweis bei erreichter Grenze. Sie stellen
+(Zusammenfassung je Weg, Kategorie-Filter, Sortierung nach Entfernung, `LIMIT 500`), das Einlesen
+der zusammengefassten Zeilen und den Hinweis bei erreichter Grenze. Sie stellen
 keine Anfragen an die DZT.
 
 ### Aufbau der App

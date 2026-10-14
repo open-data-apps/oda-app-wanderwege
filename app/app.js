@@ -6,8 +6,9 @@
  *    Wege) sind fest in der Instanz-Konfiguration hinterlegt (ort, radiusKm,
  *    kategorie) — keine Suchmaske im UI. Beim Erstaufruf laedt die App den
  *    konfigurierten Ausschnitt automatisch aus der DZT-Knowledge-Graph-API.
- *  - Suche laeuft per SPARQL (ein Request liefert Name, Laenge, Schwierigkeit,
- *    Dauer, Rundweg-Kennzeichen, Art und einen Referenzpunkt je Treffer);
+ *  - Suche laeuft per SPARQL (ein Request liefert je Weg eine aggregierte Zeile
+ *    mit Name, Laenge, Schwierigkeit, Dauer, Rundweg-Kennzeichen, Art und
+ *    einem Referenzpunkt; die Kategorie filtert bereits die Abfrage);
  *    verbleibende Filter (Schwierigkeit, Laenge, Rundweg) bleiben im UI
  *    einstellbar.
  *  - Die Detailansicht laedt bei Bedarf den vollen Datensatz eines Wegs
@@ -140,6 +141,14 @@ const KATEGORIE_TO_GROUP = {
 };
 const DIFFICULTY_ORDER = ["Leicht", "Mittel", "Schwer"];
 const DEFAULT_RADIUS_KM = 25;
+// 1.7.9: Höchstzahl geladener Wege je Suche (LIMIT zählt Wege, nicht Ergebniszeilen).
+// Gemessen 2026-10-14: 25 km enthalten 224–322 Wege aller Kategorien, 50/100 km mehrere
+// Hundert Wanderwege; 500 deckt kleine Umkreise vollständig ab und hält Karte (Marker ohne
+// Clustering) und Antwortzeit überschaubar.
+const TRAIL_SEARCH_LIMIT = 500;
+// Trennzeichen für die per GROUP_CONCAT gebündelten Namen (Sprache U+241F Name, Einträge U+241E).
+const NAME_LANG_SEP = "\u241F";
+const NAME_SEP = "\u241E";
 const LENGTH_BUCKETS = [
   { id: "", label: "Beliebige Länge", min: 0, max: Infinity },
   { id: "kurz", label: "bis 5 km", min: 0, max: 5 },
@@ -411,7 +420,7 @@ async function runSearch(state, center, label) {
 
   let json;
   try {
-    const query = buildTrailSearchSparql(center[0], center[1], state.radiusKm);
+    const query = buildTrailSearchSparql(center[0], center[1], state.radiusKm, state.lockedGroup);
     json = await fetchSparql(query, state.config, controller.signal);
   } catch (error) {
     if (controller.signal.aborted) return false;
@@ -422,8 +431,8 @@ async function runSearch(state, center, label) {
   if (controller.signal.aborted || state.disposed) return false;
 
   const rows = json?.results?.bindings || [];
-  state.hitLimit = rows.length >= 950;
   state.allTrails = parseSparqlTrailRows(rows, state.lang);
+  state.hitLimit = state.allTrails.length >= TRAIL_SEARCH_LIMIT;
 
   if (state.allTrails.length === 0) {
     showStatus(state, `Keine Wege im Umkreis von ${state.radiusKm} km um „${state.centerLabel}" gefunden.`, "info");
@@ -437,7 +446,7 @@ async function runSearch(state, center, label) {
   return true;
 }
 
-function buildTrailSearchSparql(lat, lon, radiusKm) {
+function buildTrailSearchSparql(lat, lon, radiusKm, group) {
   const latNum = Number(lat);
   const lonNum = Number(lon);
   const radius = `${Math.max(1, Math.round(Number(radiusKm) || DEFAULT_RADIUS_KM))}km`;
@@ -452,11 +461,23 @@ function buildTrailSearchSparql(lat, lon, radiusKm) {
     },
   });
   const geoShapeLiteral = JSON.stringify(geoShapeJson);
-  // 1.7.8: Nächstgelegene Startpunkte zuerst (Abstandsquadrat mit Breitenkorrektur), Wege ohne
-  // Startpunkt ans Ende. Die DZT-Umkreissuche liefert wechselnde Kandidatenmengen;
-  // „nächstgelegen“ gilt daher für die jeweils gelieferten Treffer.
+  // 1.7.9: Kategorie in der Abfrage, mit derselben Rangfolge wie classifyTypeGroup()
+  // (Rad > Wandern > Sonstige), damit LIMIT nur Wege der Instanz-Kategorie zählt.
+  const hatTyp = (typen) =>
+    `EXISTS { ?geoent a ?gt . FILTER(?gt IN (${Array.from(typen, (t) => "odta:" + t).join(", ")})) }`;
+  const kategorieFilter = {
+    rad: `\n  FILTER(${hatTyp(TRAIL_GROUP_RAD)})`,
+    wandern: `\n  FILTER(${hatTyp(TRAIL_GROUP_WANDERN)} && !${hatTyp(TRAIL_GROUP_RAD)})`,
+    sonstige: `\n  FILTER(!${hatTyp(TRAIL_GROUP_RAD)} && !${hatTyp(TRAIL_GROUP_WANDERN)})`,
+  }[group] || "";
+  // 1.7.8: Nächstgelegene Startpunkte zuerst (Abstandsquadrat mit Breitenkorrektur).
+  // 1.7.9: COALESCE(…, 1e9) setzt Wege ohne oder mit nicht numerischem Startpunkt ans Ende
+  // (ein Ausdrucksfehler sortiert in SPARQL sonst vor alle Zahlen). Die DZT-Umkreissuche
+  // liefert wechselnde Kandidatenmengen; „nächstgelegen“ gilt für die jeweils gelieferten Treffer.
   const breitenFaktor = (Math.cos((latNum * Math.PI) / 180) ** 2).toFixed(4);
 
+  // 1.7.9: Je Weg aggregiert (GROUP BY ?id), damit LIMIT Wege zählt und kein Weg abgeschnitten wird.
+  // Umkreissuche als Unterabfrage zuerst (Muster oda-sehenswuerdigkeiten, buildDztSparqlQuery).
   return `PREFIX inst: <http://www.ontotext.com/connectors/elasticsearch/instance#>
 PREFIX con: <http://www.ontotext.com/connectors/elasticsearch#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
@@ -464,75 +485,77 @@ PREFIX schema: <https://schema.org/>
 PREFIX odta: <https://odta.io/voc/>
 PREFIX ds: <https://vocab.sti2.at/ds/>
 
-SELECT ?id ?name ?length ?diffName ?duration ?circ ?type ?startLat ?startLon WHERE {
+SELECT ?id
+  (GROUP_CONCAT(DISTINCT CONCAT(LANG(?nameVal), "${NAME_LANG_SEP}", STR(?nameVal)); separator="${NAME_SEP}") AS ?names)
+  (SAMPLE(?lengthVal) AS ?length)
+  (SAMPLE(?diffVal) AS ?diffName)
+  (SAMPLE(?durVal) AS ?duration)
+  (SAMPLE(?circVal) AS ?circ)
+  (GROUP_CONCAT(DISTINCT STR(?typeVal); separator=" ") AS ?types)
+  (SAMPLE(?sLat) AS ?startLat)
+  (SAMPLE(?sLon) AS ?startLon)
+WHERE {
+  { SELECT DISTINCT ?geoent WHERE {
   ?search a inst:dzt-geo-shapes ;
     con:query ${geoShapeLiteral} ;
     con:entities ?geoent .
+  } }
   ?geoent ds:compliesWith <${TRAIL_DS}> ; schema:geo ?geo .
-  ?geo a schema:GeoShape .
+  ?geo a schema:GeoShape .${kategorieFilter}
   BIND(?geoent AS ?id)
-  OPTIONAL { ?geoent schema:name ?name }
-  OPTIONAL { ?geoent odta:length/schema:value ?length }
-  OPTIONAL { ?geoent odta:difficulty/schema:name ?diffName }
-  OPTIONAL { ?geoent odta:estimatedDuration/schema:name ?duration }
-  OPTIONAL { ?geoent odta:circularTrail ?circ }
-  OPTIONAL { ?geoent a ?type }
+  OPTIONAL { ?geoent schema:name ?nameVal }
+  OPTIONAL { ?geoent odta:length/schema:value ?lengthVal }
+  OPTIONAL { ?geoent odta:difficulty/schema:name ?diffVal }
+  OPTIONAL { ?geoent odta:estimatedDuration/schema:name ?durVal }
+  OPTIONAL { ?geoent odta:circularTrail ?circVal }
+  OPTIONAL { ?geoent a ?typeVal }
   OPTIONAL {
     ?geoent odta:startLocation ?startLoc .
     ?startLoc schema:geo ?startGeo .
-    ?startGeo schema:latitude ?startLat ; schema:longitude ?startLon .
+    ?startGeo schema:latitude ?sLat ; schema:longitude ?sLon .
   }
 }
-ORDER BY DESC(BOUND(?startLat)) ASC((xsd:double(?startLat) - ${latNum}) * (xsd:double(?startLat) - ${latNum}) + (xsd:double(?startLon) - ${lonNum}) * (xsd:double(?startLon) - ${lonNum}) * ${breitenFaktor})
-LIMIT 1000`;
+GROUP BY ?id
+ORDER BY ASC(COALESCE((xsd:double(?startLat) - ${latNum}) * (xsd:double(?startLat) - ${latNum}) + (xsd:double(?startLon) - ${lonNum}) * (xsd:double(?startLon) - ${lonNum}) * ${breitenFaktor}, 1e9))
+LIMIT ${TRAIL_SEARCH_LIMIT}`;
 }
 
+// 1.7.9: Eine Zeile je Weg (aggregierte Abfrage); Namen als „Sprache U+241F Name“, mit U+241E
+// getrennt, Typen mit Leerzeichen getrennt.
 function parseSparqlTrailRows(rows, preferredLang) {
-  const byId = new Map();
+  const trails = [];
+  const seen = new Set();
   for (const row of rows) {
     const id = row.id && row.id.value;
-    if (!id) continue;
-    let entry = byId.get(id);
-    if (!entry) {
-      entry = {
-        id,
-        names: [],
-        length: null,
-        difficulty: "",
-        durationIso: "",
-        circular: null,
-        types: new Set(),
-        startLat: null,
-        startLon: null,
-      };
-      byId.set(id, entry);
-    }
-    if (row.name) entry.names.push({ value: row.name.value, lang: row.name["xml:lang"] || "" });
-    if (row.length && entry.length == null) entry.length = Number(row.length.value);
-    if (row.diffName && !entry.difficulty) entry.difficulty = row.diffName.value;
-    if (row.duration && !entry.durationIso) entry.durationIso = row.duration.value;
-    if (row.circ && entry.circular == null) entry.circular = row.circ.value === "true";
-    if (row.type) entry.types.add(row.type.value);
-    if (row.startLat && entry.startLat == null) entry.startLat = Number(row.startLat.value);
-    if (row.startLon && entry.startLon == null) entry.startLon = Number(row.startLon.value);
-  }
-
-  return Array.from(byId.values()).map((e) => {
-    const types = Array.from(e.types);
-    return {
-      id: e.id,
-      name: pickPreferredName(e.names, preferredLang) || "(ohne Namen)",
-      lengthKm: e.length != null && Number.isFinite(e.length) ? e.length / 1000 : null,
-      difficulty: e.difficulty,
-      durationIso: e.durationIso,
-      durationText: formatIsoDuration(e.durationIso),
-      circular: e.circular,
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    const names = String(row.names?.value || "")
+      .split(NAME_SEP)
+      .filter(Boolean)
+      .map((n) => {
+        const i = n.indexOf(NAME_LANG_SEP);
+        return i < 0 ? { value: n, lang: "" } : { value: n.slice(i + 1), lang: n.slice(0, i) };
+      });
+    const types = String(row.types?.value || "").split(" ").filter(Boolean);
+    const length = row.length ? Number(row.length.value) : null;
+    const startLat = row.startLat ? Number(row.startLat.value) : null;
+    const startLon = row.startLon ? Number(row.startLon.value) : null;
+    const durationIso = row.duration ? row.duration.value : "";
+    trails.push({
+      id,
+      name: pickPreferredName(names, preferredLang) || "(ohne Namen)",
+      lengthKm: length != null && Number.isFinite(length) ? length / 1000 : null,
+      difficulty: row.diffName ? row.diffName.value : "",
+      durationIso,
+      durationText: formatIsoDuration(durationIso),
+      circular: row.circ ? row.circ.value === "true" : null,
       types,
       group: classifyTypeGroup(types),
-      startLat: Number.isFinite(e.startLat) ? e.startLat : null,
-      startLon: Number.isFinite(e.startLon) ? e.startLon : null,
-    };
-  });
+      startLat: Number.isFinite(startLat) ? startLat : null,
+      startLon: Number.isFinite(startLon) ? startLon : null,
+    });
+  }
+  return trails;
 }
 
 function pickPreferredName(names, preferredLang) {
@@ -729,7 +752,7 @@ function renderList(state) {
   }
 
   const limitNotice = state.hitLimit
-    ? `<div class="alert alert-warning ww-limit-notice" role="alert">Sehr viele Treffer im gewählten Umkreis – die Liste ist möglicherweise unvollständig. Geladen werden die nächstgelegenen unter den Treffern, die die DZT-Umkreissuche liefert (nach Startpunkt sortiert); diese Treffer können zwischen Abrufen wechseln. Den Umkreis legt die Instanz fest; ein kleinerer Umkreis lässt sich in der Instanz-Konfiguration einstellen.</div>`
+    ? `<div class="alert alert-warning ww-limit-notice" role="alert">Sehr viele Treffer im gewählten Umkreis – die Liste ist möglicherweise unvollständig. Geladen werden höchstens ${TRAIL_SEARCH_LIMIT} Wege der eingestellten Kategorie, und zwar die nächstgelegenen unter den Treffern, die die DZT-Umkreissuche liefert (nach Startpunkt sortiert); diese Treffer können zwischen Abrufen wechseln. Den Umkreis legt die Instanz fest; ein kleinerer Umkreis lässt sich in der Instanz-Konfiguration einstellen.</div>`
     : "";
 
   list.innerHTML =
