@@ -729,7 +729,7 @@ function renderList(state) {
   }
 
   const limitNotice = state.hitLimit
-    ? `<div class="alert alert-warning ww-limit-notice" role="alert">Sehr viele Treffer im gewählten Umkreis – die Liste ist möglicherweise unvollständig. Geladen werden die nächstgelegenen unter den Treffern, die die DZT-Umkreissuche liefert (nach Startpunkt sortiert); diese Treffer können zwischen Abrufen wechseln. Kleineren Umkreis wählen.</div>`
+    ? `<div class="alert alert-warning ww-limit-notice" role="alert">Sehr viele Treffer im gewählten Umkreis – die Liste ist möglicherweise unvollständig. Geladen werden die nächstgelegenen unter den Treffern, die die DZT-Umkreissuche liefert (nach Startpunkt sortiert); diese Treffer können zwischen Abrufen wechseln. Den Umkreis legt die Instanz fest; ein kleinerer Umkreis lässt sich in der Instanz-Konfiguration einstellen.</div>`
     : "";
 
   list.innerHTML =

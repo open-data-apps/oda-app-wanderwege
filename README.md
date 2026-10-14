@@ -162,6 +162,16 @@ nicht, deshalb bleibt der Datenabruf ohne Ergebnis — UI, Konfiguration und Feh
 trotzdem prüfen. Ein echter Testlauf mit Daten braucht eine laufende ODAS-Instanz, in der diese
 App als Instanz gebucht ist (siehe „Auslieferung an den ODAS" unten).
 
+### Tests
+
+```bash
+node --test tests/
+```
+
+Die Offline-Tests laden die ausgelieferte `app/app.js` und prüfen den Aufbau der DZT-Abfrage
+(Sortierung nach Entfernung, `LIMIT 1000`) und den Hinweis bei erreichter Grenze. Sie stellen
+keine Anfragen an die DZT.
+
 ### Aufbau der App
 Der Inhaltsbereich wird in `app/app.js` erstellt. Dort sind der automatische Suchlauf aus der
 Instanz-Konfiguration (Ort/Umkreis/Kategorie, SPARQL), die verbleibenden Filter, Paginierung,
