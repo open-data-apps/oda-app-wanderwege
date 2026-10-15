@@ -3,7 +3,7 @@
   "app-entwickler-name": "ondics-gmbh",
   "name-in-url": "wanderwege",
   "name": "Wanderwege",
-  "app-version": "1.7.10",
+  "app-version": "1.7.11",
   "app-package-version": "2",
   "odas-app-icon": "assets/odas-app-icon.svg",
   "app-icon": "assets/odas-app-icon.svg",
@@ -64,7 +64,12 @@
     "Geodaten"
   ],
   "screenshots": [
-    "assets/Desktop_Screenshot.png"
+    "assets/Desktop_Screenshot.png",
+    "assets/Desktop_Screenshot_2.png",
+    "assets/Desktop_Screenshot_3.png",
+    "assets/Mobile_Screenshot.png",
+    "assets/Mobile_Screenshot_2.png",
+    "assets/Mobile_Screenshot_3.png"
   ],
   "daten": {
     "beschreibung": "ODTA-konforme Wander- und Radwege (odta:Trail) aus dem DZT Knowledge Graph. Suche per SPARQL-Geo-Umkreisabfrage, Detaildaten per REST-Einzelabruf (GET /v2/kg/things/{id}).",

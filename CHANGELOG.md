@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.7.11 - 2026-10-15
+- DOCS: Neue Store-Screenshots: je drei Desktop- (1440 × 1000) und Mobile-Aufnahmen (390 × 844) der aktuellen App, aufgenommen auf der Dev-Instanz. Bisherige Bilder nach `docs/screenshots/archive/2026-10-13/` verschoben. Keine Änderung an App-Code oder Konfiguration.
+
 ## 1.7.10 - 2026-10-15
 - FIX: Wegbeschreibungen aus dem DZT zeigen `**fett**` als Fettdruck statt roher Sternchen; lose Sternchen und Markdown-Überschriftenzeichen werden entfernt. Der Text bleibt vollständig HTML-escaped.
 - FIX: Einleitungssatz „Diese Karte zeigt Wege der Kategorie „…“ im Umkreis …“ statt „zeigt Fußwanderweg im Umkreis“.
