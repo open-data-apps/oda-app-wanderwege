@@ -302,7 +302,7 @@ function renderErklaerText(state) {
     return;
   }
   el.innerHTML =
-    `<p class="ww-erklaer-p">Diese Karte zeigt ${escapeHtml(kategorieLabel)} im Umkreis von ` +
+    `<p class="ww-erklaer-p">Diese Karte zeigt Wege der Kategorie „${escapeHtml(kategorieLabel)}“ im Umkreis von ` +
     `${escapeHtml(String(radius))} km um ${escapeHtml(ort)}. Die Wege werden live aus dem ` +
     `Knowledge Graph der Deutschen Zentrale für Tourismus abgerufen.</p>`;
 }
@@ -1129,7 +1129,7 @@ function detailHtml(state, trail, detail) {
 
     ${galleryHtml}
 
-    ${detail.description ? `<div class="ww-detail-desc">${escapeHtml(detail.description)}</div>` : ""}
+    ${detail.description ? `<div class="ww-detail-desc">${formatDztText(detail.description)}</div>` : ""}
 
     <div class="ww-detail-grid">
       <div class="ww-detail-section">
@@ -1642,6 +1642,15 @@ function isLeerErgebnis(json) {
   if (Array.isArray(json.results) && json.results.length === 0) return true;
   if (json.result && Array.isArray(json.result.records) && json.result.records.length === 0) return true;
   return false;
+}
+
+// DZT-Beschreibungen enthalten Markdown-Reste: erst escapen, dann nur **fett** in <strong>
+// umwandeln; lose Sternchen und Überschriftenzeichen am Zeilenanfang entfernen.
+function formatDztText(value = "") {
+  return escapeHtml(value)
+    .replace(/^[ \t]*#{1,6}[ \t]+/gm, "")
+    .replace(/\*\*([^*\n]+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*\*/g, "");
 }
 
 function escapeHtml(value = "") {

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.10 - 2026-10-15
+- FIX: Wegbeschreibungen aus dem DZT zeigen `**fett**` als Fettdruck statt roher Sternchen; lose Sternchen und Markdown-Überschriftenzeichen werden entfernt. Der Text bleibt vollständig HTML-escaped.
+- FIX: Einleitungssatz „Diese Karte zeigt Wege der Kategorie „…“ im Umkreis …“ statt „zeigt Fußwanderweg im Umkreis“.
+- TEST: `tests/text-format.test.cjs` gegen die ausgelieferte `app/app.js`.
+
 ## 1.7.9 - 2026-10-14
 - FIX: Die Wegsuche fasst je Weg eine Ergebniszeile zusammen (`GROUP BY ?id` mit `SAMPLE`/`GROUP_CONCAT`), sodass `LIMIT` Wege statt Zeilen zählt und kein Weg mehr mit abgeschnittenen Angaben (Namen, Typen) am Listenende steht. Bisher ergaben 1000 Zeilen nur rund 90–180 Wege aller Kategorien.
 - FIX: Die konfigurierte Kategorie (Radweg/Fußwanderweg/Sonstige) filtert bereits die SPARQL-Abfrage, mit derselben Rangfolge wie die bisherige Zuordnung im Browser (Rad > Wandern > Sonstige); andere Kategorien verbrauchen keine Plätze der Grenze mehr.
