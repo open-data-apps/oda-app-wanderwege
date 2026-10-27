@@ -541,16 +541,18 @@ function parseSparqlTrailRows(rows, preferredLang) {
     const startLat = row.startLat ? Number(row.startLat.value) : null;
     const startLon = row.startLon ? Number(row.startLon.value) : null;
     const durationIso = row.duration ? row.duration.value : "";
+    const lengthKm = length != null && Number.isFinite(length) ? length / 1000 : null;
+    const group = classifyTypeGroup(types);
     trails.push({
       id,
       name: pickPreferredName(names, preferredLang) || "(ohne Namen)",
-      lengthKm: length != null && Number.isFinite(length) ? length / 1000 : null,
+      lengthKm,
       difficulty: row.diffName ? row.diffName.value : "",
       durationIso,
-      durationText: formatIsoDuration(durationIso),
+      durationText: formatDauer(durationIso, lengthKm, group),
       circular: row.circ ? row.circ.value === "true" : null,
       types,
-      group: classifyTypeGroup(types),
+      group,
       startLat: Number.isFinite(startLat) ? startLat : null,
       startLon: Number.isFinite(startLon) ? startLon : null,
     });
@@ -581,6 +583,17 @@ function formatIsoDuration(iso) {
   const min = Number(m[2] || 0);
   if (!h && !min) return "";
   return [h ? `${h} Std` : "", min ? `${min} Min` : ""].filter(Boolean).join(" ");
+}
+
+// Live-Befund 27.10.2026: Die DZT-Quelle liefert teils Zeiten, die nicht zur Länge
+// passen (z. B. 2,4 km in 4 Std 12 Min). Der Wert bleibt sichtbar, bekommt aber einen Hinweis.
+function formatDauer(durationIso, lengthKm, group) {
+  const text = formatIsoDuration(durationIso);
+  const bereich = { wandern: [1, 8], rad: [4, 35] }[group];
+  if (!text || !bereich || !(lengthKm > 0)) return text;
+  const m = /^PT(?:(\d+)H)?(?:(\d+)M)?$/.exec(durationIso);
+  const kmh = lengthKm / (Number(m[1] || 0) + Number(m[2] || 0) / 60);
+  return kmh < bereich[0] || kmh > bereich[1] ? `${text} (Zeitangabe der Quelle wirkt unplausibel)` : text;
 }
 
 // ---------------------------------------------------------------------------
@@ -1025,6 +1038,7 @@ function parseTrailDetail(obj) {
     lengthKm: lengthM != null ? lengthM / 1000 : null,
     uphillM,
     downhillM,
+    durationIso,
     durationText: formatIsoDuration(durationIso),
     circular: circularRaw === "true" || circularRaw === true,
     difficulty,
@@ -1109,6 +1123,7 @@ function parseGeoLine(lineStr) {
 
 function detailHtml(state, trail, detail) {
   const lengthText = detail.lengthKm != null ? `${detail.lengthKm.toLocaleString("de-DE", { maximumFractionDigits: 1 })} km` : "";
+  const dauerText = formatDauer(detail.durationIso, detail.lengthKm, trail.group);
   const hasElevationProfile = detail.lineCoords.filter((p) => p.ele != null).length >= 5;
 
   const galleryHtml = detail.images.length
@@ -1136,7 +1151,7 @@ function detailHtml(state, trail, detail) {
         <h3 class="ww-detail-section-title">Kennzahlen</h3>
         <div class="ww-detail-info">
           ${lengthText ? `<div><span class="ww-info-label">Länge</span> <span class="ww-info-value">${escapeHtml(lengthText)}</span></div>` : ""}
-          ${detail.durationText ? `<div><span class="ww-info-label">Dauer</span> <span class="ww-info-value">${escapeHtml(detail.durationText)}</span></div>` : ""}
+          ${dauerText ? `<div><span class="ww-info-label">Dauer</span> <span class="ww-info-value">${escapeHtml(dauerText)}</span></div>` : ""}
           ${detail.uphillM != null ? `<div><span class="ww-info-label">Aufstieg</span> <span class="ww-info-value">${escapeHtml(String(Math.round(detail.uphillM)))} m</span></div>` : ""}
           ${detail.downhillM != null ? `<div><span class="ww-info-label">Abstieg</span> <span class="ww-info-value">${escapeHtml(String(Math.round(detail.downhillM)))} m</span></div>` : ""}
         </div>

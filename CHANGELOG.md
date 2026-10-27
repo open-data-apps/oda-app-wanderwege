@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.7.13 - 2026-10-27
+- FIX: Zeitangaben der DZT-Quelle, die offensichtlich nicht zur Länge passen (z. B. 2,4 km in 4 Std 12 Min), tragen in Liste und Detail den Hinweis „Zeitangabe der Quelle wirkt unplausibel“. Der Wert selbst bleibt unverändert (Live-Befund 27.10.2026; die Werte stehen so in der Quelle).
+- DOCS: Store-Katalogtext ohne Instanz-Platzhalter: Links mit Platzhalterziel erscheinen dort als Text, weil die Katalogseite keine Instanz kennt und Platzhalter nicht auflöst (Live-Befund 27.10.2026). „Über diese App“ in der App bleibt unverändert.
+
 ## 1.7.12 - 2026-10-15
 - FIX: Kopfzeile bei 360 px ohne Überlauf (Template): Logo- und Burger-Spalte passen sich der Breite an, das Menü-Symbol ragt nicht mehr über den rechten Rand. Keine Änderung an App-Code oder Konfiguration.
 
