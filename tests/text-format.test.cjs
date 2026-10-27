@@ -31,26 +31,35 @@ test("Einleitungssatz nennt die Kategorie grammatisch korrekt", () => {
 });
 
 // Live-Befund 27.10.2026: Die DZT-Quelle liefert Zeiten, die nicht zur Länge passen
-// (Werte per SPARQL geprüft, alle als HikingTrail typisiert).
+// (Werte per SPARQL geprüft, alle als HikingTrail typisiert). Geprüft werden nur reine
+// Geh- und Wanderwege; Alpin-, Lauf-, Skate- und Radwege haben andere übliche Tempi.
 const UNPLAUSIBEL = " (Zeitangabe der Quelle wirkt unplausibel)";
+const T = (...namen) => ["https://schema.org/Place", "https://odta.io/voc/Trail", ...namen.map((n) => "https://odta.io/voc/" + n)];
 
-test("Dauer: offensichtlich unplausible Zeitangaben werden markiert, der Wert bleibt", () => {
-  assert.equal(c.formatDauer("PT4H12M", 2.373, "wandern"), "4 Std 12 Min" + UNPLAUSIBEL);
-  assert.equal(c.formatDauer("PT7H", 4.12, "wandern"), "7 Std" + UNPLAUSIBEL);
-  assert.equal(c.formatDauer("PT2H35M", 38.11, "wandern"), "2 Std 35 Min" + UNPLAUSIBEL);
-  assert.equal(c.formatDauer("PT40M", 2.176, "wandern"), "40 Min");
-  assert.equal(c.formatDauer("PT2H35M", 38.11, "rad"), "2 Std 35 Min");
-  assert.equal(c.formatDauer("PT7H", 4.12, "sonstige"), "7 Std");
+test("Dauer: offensichtlich unplausible Zeiten auf Wanderwegen werden markiert, der Wert bleibt", () => {
+  assert.equal(c.formatDauer("PT4H12M", 2.373, T("HikingTrail", "ThematicTrail")), "4 Std 12 Min" + UNPLAUSIBEL);
+  assert.equal(c.formatDauer("PT7H", 4.12, T("HikingTrail")), "7 Std" + UNPLAUSIBEL);
+  assert.equal(c.formatDauer("PT2H35M", 38.11, T("HikingTrail", "LongDistanceHikeTrail")), "2 Std 35 Min" + UNPLAUSIBEL);
+  assert.equal(c.formatDauer("PT40M", 2.176, T("HikingTrail")), "40 Min");
+});
+
+test("Dauer: Alpin-, Lauf-, Skate- und Radwege sowie sonstige Wege werden nicht geprüft (Review I1)", () => {
+  assert.equal(c.formatDauer("PT1H20M", 20, T("InlineSkatingTrail")), "1 Std 20 Min");
+  assert.equal(c.formatDauer("PT1H30M", 15, T("TrailRunning")), "1 Std 30 Min");
+  assert.equal(c.formatDauer("PT3H30M", 2.5, T("HikingTrail", "AlpineTourTrail")), "3 Std 30 Min");
+  assert.equal(c.formatDauer("PT3H30M", 12, T("MountainBikeTourTrail")), "3 Std 30 Min");
+  assert.equal(c.formatDauer("PT2H35M", 38.11, T("BikeTourTrail")), "2 Std 35 Min");
+  assert.equal(c.formatDauer("PT7H", 4.12, T()), "7 Std");
 });
 
 test("Dauer: ohne Länge oder ohne lesbare Zeit keine Markierung", () => {
-  assert.equal(c.formatDauer("PT4H12M", null, "wandern"), "4 Std 12 Min");
-  assert.equal(c.formatDauer("", 3, "wandern"), "");
-  assert.equal(c.formatDauer("P1DT2H", 30, "wandern"), "");
+  assert.equal(c.formatDauer("PT4H12M", null, T("HikingTrail")), "4 Std 12 Min");
+  assert.equal(c.formatDauer("", 3, T("HikingTrail")), "");
+  assert.equal(c.formatDauer("P1DT2H", 30, T("HikingTrail")), "");
 });
 
 test("Detailansicht zeigt die Markierung", () => {
-  const html = c.detailHtml({}, { name: "RK2", group: "wandern" },
+  const html = c.detailHtml({}, { name: "RK2", group: "wandern", types: T("HikingTrail") },
     { description: "", images: [], lineCoords: [], lengthKm: 4.12, durationIso: "PT7H", durationText: "7 Std" });
   assert.match(html, /7 Std \(Zeitangabe der Quelle wirkt unplausibel\)/);
 });

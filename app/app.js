@@ -549,7 +549,7 @@ function parseSparqlTrailRows(rows, preferredLang) {
       lengthKm,
       difficulty: row.diffName ? row.diffName.value : "",
       durationIso,
-      durationText: formatDauer(durationIso, lengthKm, group),
+      durationText: formatDauer(durationIso, lengthKm, types),
       circular: row.circ ? row.circ.value === "true" : null,
       types,
       group,
@@ -587,13 +587,20 @@ function formatIsoDuration(iso) {
 
 // Live-Befund 27.10.2026: Die DZT-Quelle liefert teils Zeiten, die nicht zur Länge
 // passen (z. B. 2,4 km in 4 Std 12 Min). Der Wert bleibt sichtbar, bekommt aber einen Hinweis.
-function formatDauer(durationIso, lengthKm, group) {
+// Geprüft werden nur reine Geh- und Wanderwege (1–8 km/h); Alpin-, Lauf-, Skate- und
+// Radwege haben andere übliche Tempi und bleiben ungeprüft.
+function formatDauer(durationIso, lengthKm, types) {
   const text = formatIsoDuration(durationIso);
-  const bereich = { wandern: [1, 8], rad: [4, 35] }[group];
-  if (!text || !bereich || !(lengthKm > 0)) return text;
+  const gehwege = ["HikingTrail", "LongDistanceHikeTrail", "PilgrimageTrail", "PanoramaTrail",
+    "SightseeingTrail", "ThematicTrail", "NordicWalkingTrail"];
+  const andere = ["AlpineTourTrail", "MountaineeringTrail", "TrailRunning", "JoggingTrail",
+    "WalkingAndSkatingTrail", "InlineSkatingTrail", ...TRAIL_GROUP_RAD];
+  const local = (types || []).map((t) => String(t).replace("https://odta.io/voc/", ""));
+  const pruefen = local.some((t) => gehwege.includes(t)) && !local.some((t) => andere.includes(t));
+  if (!text || !pruefen || !(lengthKm > 0)) return text;
   const m = /^PT(?:(\d+)H)?(?:(\d+)M)?$/.exec(durationIso);
   const kmh = lengthKm / (Number(m[1] || 0) + Number(m[2] || 0) / 60);
-  return kmh < bereich[0] || kmh > bereich[1] ? `${text} (Zeitangabe der Quelle wirkt unplausibel)` : text;
+  return kmh < 1 || kmh > 8 ? `${text} (Zeitangabe der Quelle wirkt unplausibel)` : text;
 }
 
 // ---------------------------------------------------------------------------
@@ -1123,7 +1130,7 @@ function parseGeoLine(lineStr) {
 
 function detailHtml(state, trail, detail) {
   const lengthText = detail.lengthKm != null ? `${detail.lengthKm.toLocaleString("de-DE", { maximumFractionDigits: 1 })} km` : "";
-  const dauerText = formatDauer(detail.durationIso, detail.lengthKm, trail.group);
+  const dauerText = formatDauer(detail.durationIso, detail.lengthKm, trail.types);
   const hasElevationProfile = detail.lineCoords.filter((p) => p.ele != null).length >= 5;
 
   const galleryHtml = detail.images.length
