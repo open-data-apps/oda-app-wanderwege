@@ -280,4 +280,4 @@ nicht mitversioniert, sondern bei Bedarf mit `make zip` erzeugt.
 
 ## Lizenz
 
-Der App-Code steht unter der [MIT-Lizenz](LICENSE), © 2026 Ondics GmbH. Mitgelieferte Bibliotheken unter `app/vendor/` behalten ihre eigenen Lizenzen. Daten und Bilder aus den angebundenen Quellen behalten die Rechte der jeweiligen Quelle; die MIT-Lizenz gilt nicht für sie.
+Der App-Code steht unter der [MIT-Lizenz](LICENSE), © 2026 Ondics GmbH. Mitgelieferte Bibliotheken unter `app/vendor/` behalten ihre eigenen Lizenzen; Versionen, Herkunft und vollständige Lizenztexte stehen in [`app/vendor/THIRD-PARTY-NOTICES.md`](app/vendor/THIRD-PARTY-NOTICES.md). Daten und Bilder aus den angebundenen Quellen behalten die Rechte der jeweiligen Quelle; die MIT-Lizenz gilt nicht für sie.
