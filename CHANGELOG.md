@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.7.14 - 2026-11-03
+- DOCS: MIT-Lizenz ergänzt: `LICENSE` liegt im Repository und im Lieferpaket (`make zip`), das README hat einen Abschnitt „Lizenz“. Keine Änderung an App-Code oder Konfiguration.
+
 ## 1.7.13 - 2026-10-27
 - FIX: Zeitangaben der DZT-Quelle, die bei Geh- und Wanderwegen offensichtlich nicht zur Länge passen (unter 1 oder über 8 km/h, z. B. 2,4 km in 4 Std 12 Min), tragen in Liste und Detail den Hinweis „Zeitangabe der Quelle wirkt unplausibel“. Der Wert selbst bleibt unverändert (Live-Befund 27.10.2026; die Werte stehen so in der Quelle).
 - DOCS: Store-Katalogtext ohne Instanz-Platzhalter: Links mit Platzhalterziel erscheinen dort als Text, weil die Katalogseite keine Instanz kennt und Platzhalter nicht auflöst (Live-Befund 27.10.2026). „Über diese App“ in der App bleibt unverändert.
